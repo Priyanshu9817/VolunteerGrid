@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>My Dashboard | VolunteerGrid</title>
+</head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<div class="vg-app-layout">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+    <main class="vg-main-content vg-fade-in"
+          th:with="shifts=${summary.totalShiftsAssigned},
+                   done=${summary.completedShifts},
+                   pct=${summary.totalShiftsAssigned > 0 ? summary.completedShifts * 100 / summary.totalShiftsAssigned : 0}">
+        <div th:replace="~{fragments/layout :: flashMessages}"></div>
+
+        <div class="vg-card mb-4 dashboard-analytics">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="mb-1"><i class="bi bi-bar-chart-line text-accent me-2"></i>My participation pulse</h5>
+                    <small class="text-muted" data-dashboard-refreshed>Loading analytics…</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm vg-btn-soft" data-dashboard-refresh><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+                    <button type="button" class="btn btn-sm vg-btn-outline" data-dashboard-export><i class="bi bi-download me-1"></i>Export CSV</button>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-5"><canvas data-dashboard-status-chart height="190"></canvas></div>
+                <div class="col-lg-7"><canvas data-dashboard-performance-chart height="190"></canvas></div>
+            </div>
+        </div>
+
+        <div class="vg-page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="vg-greeting">
+                <span class="vg-avatar vg-avatar-lg" th:text="${#strings.toUpperCase(#strings.substring(currentUser.name,0,1))}">V</span>
+                <div>
+                    <h1 class="vg-page-title">My Dashboard</h1>
+                    <p class="vg-page-subtitle" th:text="'Welcome, ' + ${currentUser.name} + '!'"></p>
+                </div>
+            </div>
+            <a th:href="@{/events}" class="btn btn-accent"><i class="bi bi-search me-1"></i>Find shifts</a>
+        </div>
+
+        <!-- Hero -->
+        <section class="vg-hero-banner vg-hero-volunteer mb-4">
+            <div class="vg-hero-copy">
+                <span class="vg-eyebrow"><i class="bi bi-heart-fill me-1"></i>Make an impact</span>
+                <h2 th:if="${summary.totalVerifiedHours > 0}"
+                    th:text="'You have given ' + ${#numbers.formatDecimal(summary.totalVerifiedHours,1,1)} + ' verified hours. Keep going!'">Hours</h2>
+                <h2 th:unless="${summary.totalVerifiedHours > 0}">Your time can change the whole event.</h2>
+                <p>Find a shift that fits your skills and help make campus experiences unforgettable.</p>
+                <a th:href="@{/events}" class="btn btn-light"><i class="bi bi-search me-1"></i>Explore opportunities</a>
+            </div>
+            <div class="vg-hero-art" aria-hidden="true">
+                <i class="bi bi-people-fill"></i>
+                <span class="vg-art-dot dot-one"></span>
+                <span class="vg-art-dot dot-two"></span>
+                <span class="vg-art-ring"></span>
+            </div>
+        </section>
+
+        <!-- Contribution Summary -->
+        <div class="vg-card mb-4">
+            <h5 class="mb-3"><i class="bi bi-award text-accent me-2"></i>Contribution Summary</h5>
+            <div class="row g-3 align-items-center">
+                <div class="col-md-auto d-flex justify-content-center">
+                    <div class="vg-ring" th:style="'--p:' + ${pct} + ';--c:#14b8a6'">
+                        <div><strong th:text="${pct} + '%'">0%</strong><small>shifts completed</small></div>
+                    </div>
+                </div>
+                <div class="col-md">
+                    <div class="vg-metric-row">
+                        <div class="vg-metric">
+                            <div class="vg-metric-val" th:text="${summary.totalEventsParticipated}">0</div>
+                            <div class="vg-metric-lbl">Events</div>
+                        </div>
+                        <div class="vg-metric">
+                            <div class="vg-metric-val" th:text="${summary.totalShiftsAssigned}">0</div>
+                            <div class="vg-metric-lbl">Shifts</div>
+                        </div>
+                        <div class="vg-metric">
+                            <div class="vg-metric-val" th:text="${summary.completedShifts}">0</div>
+                            <div class="vg-metric-lbl">Completed</div>
+                        </div>
+                        <div class="vg-metric">
+                            <div class="vg-metric-val" th:text="${#numbers.formatDecimal(summary.totalVerifiedHours,1,1)}">0.0</div>
+                            <div class="vg-metric-lbl">Verified hours</div>
+                        </div>
+                        <div class="vg-metric">
+                            <div class="vg-metric-val" th:text="${summary.pendingAssignments}">0</div>
+                            <div class="vg-metric-lbl">Pending approval</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Assignments -->
+        <div class="vg-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-clipboard-check text-accent me-2"></i>My Assignments</h5>
+                <a th:href="@{/volunteer/my-assignments}" class="btn btn-sm vg-btn-soft">
+                    View all<i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            <div th:if="${myAssignments.empty}" class="vg-empty-state">
+                <i class="bi bi-clipboard d-block"></i>
+                <p>You haven't registered for any shifts yet.</p>
+                <a th:href="@{/events}" class="btn btn-accent btn-sm">Browse events</a>
+            </div>
+
+            <div th:unless="${myAssignments.empty}" class="vg-table table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr><th>Event</th><th>Task</th><th>Date</th><th>Status</th><th>Hours</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a : ${myAssignments}" th:if="${aStat.index < 5}">
+                            <td>
+                                <a th:href="@{/events/{id}(id=${a.eventId})}"
+                                   class="text-accent text-decoration-none fw-semibold"
+                                   th:text="${a.eventTitle}">Event</a>
+                            </td>
+                            <td th:text="${a.shiftTaskName}">-</td>
+                            <td class="text-muted" style="font-size:0.85rem;"
+                                th:text="${#temporals.format(a.shiftStartTime,'dd MMM, HH:mm')}">-</td>
+                            <td><span th:replace="~{fragments/layout :: assignmentBadge(${a.status})}"></span></td>
+                            <td class="text-muted"
+                                th:text="${a.completedHours != null ? #numbers.formatDecimal(a.completedHours,1,1) + ' h' : '—'}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Open Events -->
+        <div data-f-scope>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-calendar-event text-accent me-2"></i>Open Events
+                    <small class="text-muted fw-normal ms-2" data-f-count></small></h5>
+            </div>
+
+            <div th:if="${openEvents.empty}" class="vg-empty-state vg-card">
+                <i class="bi bi-calendar-x d-block"></i>
+                <p>No open events at the moment.</p>
+            </div>
+
+            <th:block th:unless="${openEvents.empty}">
+                <div class="vg-filterbar">
+                    <div class="search">
+                        <i class="bi bi-search"></i>
+                        <input type="search" class="form-control" placeholder="Search by event or venue…" data-f-search autocomplete="off"/>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-4" th:each="ev : ${openEvents}" data-f-row
+                         th:attr="data-search=${ev.title + ' ' + ev.venue + ' ' + ev.organizerName}">
+                        <div class="vg-event-card h-100 d-flex flex-column">
+                            <div class="mb-2 d-flex justify-content-between align-items-center">
+                                <span th:replace="~{fragments/layout :: statusBadge(${ev.status})}"></span>
+                                <small class="text-muted" th:text="${ev.shiftCount} + ' shifts'"></small>
+                            </div>
+                            <h6 class="fw-bold mb-2">
+                                <a th:href="@{/events/{id}(id=${ev.id})}" class="text-decoration-none" th:text="${ev.title}">Event</a>
+                            </h6>
+                            <div class="vg-event-meta">
+                                <span><i class="bi bi-geo-alt"></i><span th:text="${ev.venue}"></span></span>
+                                <span><i class="bi bi-calendar"></i><span th:text="${#temporals.format(ev.startTime,'dd MMM yyyy')}"></span></span>
+                            </div>
+                            <div class="vg-event-foot">
+                                <a th:href="@{/events/{id}(id=${ev.id})}" class="btn btn-sm btn-accent">
+                                    View shifts<i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-f-empty class="vg-empty-state vg-card d-none mt-3">
+                    <i class="bi bi-search d-block"></i><p>No events match your search.</p>
+                </div>
+            </th:block>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

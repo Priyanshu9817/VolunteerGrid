@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>Organizer Dashboard | VolunteerGrid</title>
+</head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<div class="vg-app-layout">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+    <main class="vg-main-content vg-fade-in"
+          th:with="nOpen=${myEvents.?[status != null and status.name() == 'OPEN'].size()},
+                   nDraft=${myEvents.?[status != null and status.name() == 'DRAFT'].size()},
+                   nShifts=${#aggregates.sum(myEvents.![shiftCount]) ?: 0},
+                   nVols=${#aggregates.sum(myEvents.![registeredVolunteers]) ?: 0}">
+        <div th:replace="~{fragments/layout :: flashMessages}"></div>
+
+        <div class="vg-card mb-4 dashboard-analytics">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h5 class="mb-1"><i class="bi bi-graph-up-arrow text-accent me-2"></i>Event performance</h5>
+                    <small class="text-muted" data-dashboard-refreshed>Loading analytics…</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm vg-btn-soft" data-dashboard-refresh><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+                    <button type="button" class="btn btn-sm vg-btn-outline" data-dashboard-export><i class="bi bi-download me-1"></i>Export CSV</button>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-5"><canvas data-dashboard-status-chart height="190"></canvas></div>
+                <div class="col-lg-7"><canvas data-dashboard-performance-chart height="190"></canvas></div>
+            </div>
+        </div>
+
+        <div class="vg-page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="vg-greeting">
+                <span class="vg-avatar vg-avatar-lg" th:text="${#strings.toUpperCase(#strings.substring(currentUser.name,0,1))}">O</span>
+                <div>
+                    <h1 class="vg-page-title">Organizer Dashboard</h1>
+                    <p class="vg-page-subtitle" th:text="'Welcome back, ' + ${currentUser.name} + '!'"></p>
+                </div>
+            </div>
+            <a th:href="@{/organizer/events/new}" class="btn btn-accent">
+                <i class="bi bi-plus-lg me-1"></i>New Event
+            </a>
+        </div>
+
+        <!-- KPIs (real figures from your events) -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="vg-card-stat vg-kpi">
+                    <span class="ic"><i class="bi bi-calendar2-check"></i></span>
+                    <div><div class="vg-stat-value" th:text="${myEvents.size()}">0</div><div class="vg-stat-label">My events</div></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="vg-card-stat vg-kpi k-teal">
+                    <span class="ic"><i class="bi bi-broadcast"></i></span>
+                    <div><div class="vg-stat-value" th:text="${nOpen}">0</div><div class="vg-stat-label">Open for sign-up</div></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="vg-card-stat vg-kpi k-amber">
+                    <span class="ic"><i class="bi bi-stopwatch"></i></span>
+                    <div><div class="vg-stat-value" th:text="${nShifts}">0</div><div class="vg-stat-label">Total shifts</div></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="vg-card-stat vg-kpi k-rose">
+                    <span class="ic"><i class="bi bi-people-fill"></i></span>
+                    <div><div class="vg-stat-value" th:text="${nVols}">0</div><div class="vg-stat-label">Volunteers registered</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero -->
+        <section class="vg-hero-banner mb-4">
+            <div class="vg-hero-copy">
+                <span class="vg-eyebrow"><i class="bi bi-stars me-1"></i>Event operations</span>
+                <h2>Bring your next campus moment to life.</h2>
+                <p th:if="${nDraft > 0}" th:text="'You have ' + ${nDraft} + ' draft event(s) waiting to be published.'">Drafts</p>
+                <p th:unless="${nDraft > 0}">Coordinate volunteers, track attendance, and keep every shift moving smoothly.</p>
+                <a th:href="@{/organizer/events/new}" class="btn btn-light">
+                    <i class="bi bi-plus-circle me-1"></i>Plan an event
+                </a>
+            </div>
+            <div class="vg-hero-art" aria-hidden="true">
+                <i class="bi bi-calendar2-heart"></i>
+                <span class="vg-art-dot dot-one"></span>
+                <span class="vg-art-dot dot-two"></span>
+                <span class="vg-art-ring"></span>
+            </div>
+        </section>
+
+        <!-- My Events -->
+        <div th:if="${myEvents.empty}" class="vg-empty-state vg-card">
+            <i class="bi bi-calendar-plus d-block"></i>
+            <p class="fw-semibold">No events yet</p>
+            <p class="text-muted" style="font-size:0.875rem;">Create your first event to get started.</p>
+            <a th:href="@{/organizer/events/new}" class="btn btn-accent mt-2">
+                <i class="bi bi-plus-circle me-1"></i>Create Event
+            </a>
+        </div>
+
+        <div th:unless="${myEvents.empty}" data-f-scope>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-accent"></i>My Events
+                    <small class="text-muted fw-normal ms-2" data-f-count></small></h5>
+            </div>
+            <div class="vg-filterbar">
+                <div class="search">
+                    <i class="bi bi-search"></i>
+                    <input type="search" class="form-control" placeholder="Search my events…" data-f-search autocomplete="off"/>
+                </div>
+                <div class="vg-chips">
+                    <button type="button" class="vg-chip active" data-f-chip="status" data-value="">All</button>
+                    <button type="button" class="vg-chip" data-f-chip="status" data-value="OPEN">Open</button>
+                    <button type="button" class="vg-chip" data-f-chip="status" data-value="DRAFT">Draft</button>
+                    <button type="button" class="vg-chip" data-f-chip="status" data-value="CLOSED">Closed</button>
+                    <button type="button" class="vg-chip" data-f-chip="status" data-value="COMPLETED">Completed</button>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-4" th:each="ev : ${myEvents}" data-f-row
+                     th:attr="data-search=${ev.title + ' ' + ev.venue},data-status=${ev.status}">
+                    <div class="vg-event-card h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span th:replace="~{fragments/layout :: statusBadge(${ev.status})}"></span>
+                            <small class="text-muted">
+                                <i class="bi bi-people me-1"></i><span th:text="${ev.registeredVolunteers}">0</span> ·
+                                <span th:text="${ev.shiftCount} + ' shifts'"></span>
+                            </small>
+                        </div>
+
+                        <h5 class="fw-bold mb-2">
+                            <a th:href="@{/events/{id}(id=${ev.id})}" class="text-decoration-none"
+                               th:text="${ev.title}">Event</a>
+                        </h5>
+
+                        <div class="vg-event-meta">
+                            <span><i class="bi bi-geo-alt"></i><span th:text="${ev.venue}"></span></span>
+                            <span><i class="bi bi-calendar"></i>
+                                <span th:text="${#temporals.format(ev.startTime,'dd MMM yyyy, HH:mm')}"></span></span>
+                        </div>
+
+                        <div class="vg-event-foot">
+                            <a th:href="@{/events/{id}(id=${ev.id})}" class="btn btn-sm vg-btn-soft"><i class="bi bi-eye"></i>View</a>
+                            <a th:href="@{/organizer/events/{id}/edit(id=${ev.id})}" class="btn btn-sm vg-btn-soft-warn"><i class="bi bi-pencil"></i>Edit</a>
+                            <a th:href="@{/organizer/events/{id}/attendance(id=${ev.id})}" class="btn btn-sm vg-btn-soft-success"><i class="bi bi-check2-circle"></i>Attendance</a>
+                            <a th:href="@{/organizer/events/{id}/report(id=${ev.id})}" class="btn btn-sm vg-btn-outline"><i class="bi bi-bar-chart"></i>Report</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div data-f-empty class="vg-empty-state vg-card d-none mt-3">
+                <i class="bi bi-search d-block"></i><p>No events match your filters.</p>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

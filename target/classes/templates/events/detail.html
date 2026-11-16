@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head}">
+    <title th:text="${event.title} + ' | VolunteerGrid'">Event Detail</title>
+</head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="vg-app-layout">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+    <main class="vg-main-content vg-fade-in">
+        <div th:replace="~{fragments/layout :: flashMessages}"></div>
+
+        <!-- Event Header -->
+        <div class="vg-page-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <div class="mb-2">
+                        <span th:replace="~{fragments/layout :: statusBadge(${event.status})}"></span>
+                    </div>
+                    <h1 class="vg-page-title" th:text="${event.title}">Event Title</h1>
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-person-workspace me-1"></i>Organised by
+                        <strong th:text="${event.organizerName}"></strong>
+                    </p>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-geo-alt me-1"></i><span th:text="${event.venue}"></span>
+                        &nbsp;|&nbsp;
+                        <i class="bi bi-clock me-1"></i>
+                        <span th:text="${#temporals.format(event.startTime,'dd MMM yyyy, HH:mm')}"></span>
+                        &nbsp;–&nbsp;
+                        <span th:text="${#temporals.format(event.endTime,'dd MMM yyyy, HH:mm')}"></span>
+                    </p>
+                </div>
+                <!-- Organizer Actions -->
+                <div class="d-flex gap-2 flex-wrap" sec:authorize="hasAnyRole('ORGANIZER','ADMIN')">
+                    <a th:href="@{/organizer/events/{id}/edit(id=${event.id})}"
+                       class="btn btn-sm vg-btn-outline">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                    <a th:href="@{/organizer/events/{id}/shifts/new(id=${event.id})}"
+                       class="btn btn-sm btn-accent">
+                        <i class="bi bi-plus me-1"></i>Add Shift
+                    </a>
+                    <a th:href="@{/organizer/events/{id}/attendance(id=${event.id})}"
+                       class="btn btn-sm vg-btn-outline">
+                        <i class="bi bi-check2-circle me-1"></i>Attendance
+                    </a>
+                    <a th:href="@{/organizer/events/{id}/report(id=${event.id})}"
+                       class="btn btn-sm vg-btn-outline">
+                        <i class="bi bi-bar-chart me-1"></i>Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div th:if="${event.description}" class="vg-card mb-4">
+            <p class="mb-0" th:text="${event.description}"></p>
+        </div>
+
+        <!-- Status Change (Organizer) -->
+        <div sec:authorize="hasAnyRole('ORGANIZER','ADMIN')" class="vg-card mb-4">
+            <h6 class="fw-700 mb-2 text-muted text-uppercase"
+                style="font-size:0.78rem; letter-spacing:0.07em;">
+                Change Status
+            </h6>
+            <form th:action="@{/organizer/events/{id}/status(id=${event.id})}" method="post"
+                  class="d-flex gap-2 flex-wrap">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <select name="status" class="form-select" style="max-width:180px;">
+                    <option value="DRAFT"     th:selected="${event.status.name() == 'DRAFT'}">Draft</option>
+                    <option value="OPEN"      th:selected="${event.status.name() == 'OPEN'}">Open</option>
+                    <option value="CLOSED"    th:selected="${event.status.name() == 'CLOSED'}">Closed</option>
+                    <option value="COMPLETED" th:selected="${event.status.name() == 'COMPLETED'}">Completed</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-accent">Update Status</button>
+            </form>
+        </div>
+
+        <!-- Shifts -->
+        <div>
+            <h4 class="fw-700 mb-3">
+                <i class="bi bi-clock-history text-accent me-2"></i>Shifts
+            </h4>
+
+            <div th:if="${shifts.empty}" class="vg-empty-state vg-card">
+                <i class="bi bi-calendar-plus d-block"></i>
+                <p>No shifts defined yet.</p>
+                <a th:href="@{/organizer/events/{id}/shifts/new(id=${event.id})}"
+                   sec:authorize="hasAnyRole('ORGANIZER','ADMIN')"
+                   class="btn btn-accent btn-sm mt-2">Add First Shift</a>
+            </div>
+
+            <div class="row g-3" th:unless="${shifts.empty}">
+                <div class="col-md-6 col-xl-4" th:each="shift : ${shifts}">
+                    <div class="vg-card h-100">
+                        <h6 class="fw-700 text-accent mb-1" th:text="${shift.taskName}">Task</h6>
+                        <p class="text-muted mb-1" style="font-size:0.85rem;">
+                            <i class="bi bi-geo-alt me-1"></i><span th:text="${shift.venue}"></span>
+                        </p>
+                        <p class="text-muted mb-2" style="font-size:0.82rem;">
+                            <i class="bi bi-clock me-1"></i>
+                            <span th:text="${#temporals.format(shift.startTime,'HH:mm')}"></span>
+                            &nbsp;–&nbsp;
+                            <span th:text="${#temporals.format(shift.endTime,'HH:mm')}"></span>
+                            <span class="ms-1 text-muted">
+                                (<span th:text="${#temporals.format(shift.startTime,'dd MMM')}"></span>)
+                            </span>
+                        </p>
+
+                        <!-- Capacity bar -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1" style="font-size:0.8rem;">
+                                <span class="text-muted">Capacity</span>
+                                <span th:classappend="${shift.full ? 'text-danger' : 'text-accent'}"
+                                      th:text="${shift.registeredCount} + ' / ' + ${shift.capacity}"></span>
+                            </div>
+                            <div class="vg-capacity-bar">
+                                <div class="vg-capacity-fill"
+                                     th:classappend="${shift.registeredCount >= shift.capacity ? 'full' : (shift.registeredCount * 2 >= shift.capacity ? 'warn' : '')}"
+                                     th:style="'width:' + ${shift.capacity > 0 ? (shift.registeredCount * 100 / shift.capacity) : 0} + '%'">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Volunteer: Register button -->
+                        <div sec:authorize="hasRole('VOLUNTEER')">
+                            <div th:if="${shift.full}" class="mt-2">
+                                <span class="badge badge-closed">Shift Full</span>
+                            </div>
+                            <div th:unless="${shift.full}">
+                                <th:block th:if="${event.status.name() == 'OPEN'}">
+                                    <!-- Check if already registered -->
+                                    <th:block th:with="alreadyReg=${myAssignments != null && #lists.contains(myAssignments.![shiftId], shift.id)}">
+                                        <div th:if="${alreadyReg}">
+                                            <span class="badge badge-approved">Registered</span>
+                                        </div>
+                                        <form th:unless="${alreadyReg}"
+                                              th:action="@{/volunteer/shifts/{shiftId}/register(shiftId=${shift.id})}"
+                                              method="post" class="mt-2">
+                                            <input type="hidden" name="eventId" th:value="${event.id}"/>
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                            <button type="submit" class="btn btn-sm btn-accent">
+                                                <i class="bi bi-person-plus me-1"></i>Register
+                                            </button>
+                                        </form>
+                                    </th:block>
+                                </th:block>
+                                <div th:unless="${event.status.name() == 'OPEN'}">
+                                    <span class="badge badge-closed">Registration Closed</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Organizer: Manage shift -->
+                        <div class="d-flex gap-2 mt-2" sec:authorize="hasAnyRole('ORGANIZER','ADMIN')">
+                            <a th:href="@{/organizer/shifts/{id}/edit(id=${shift.id})}"
+                               class="btn btn-sm vg-btn-outline">Edit</a>
+                            <a th:href="@{/organizer/shifts/{id}/assignments(id=${shift.id})}"
+                               class="btn btn-sm vg-btn-outline">Registrations</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

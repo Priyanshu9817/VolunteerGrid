@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>Register | VolunteerGrid</title>
+</head>
+<body>
+<div class="vg-auth-page">
+  <div class="vg-auth-split">
+    <section class="vg-auth-brand">
+        <div class="vg-auth-mark"><i class="bi bi-grid-3x3-gap-fill"></i>VolunteerGrid</div>
+        <div>
+            <h1>Make your campus<br/>run on volunteers.</h1>
+            <p class="lead">Join events, pick the shifts that fit your timetable and build a verified service record.</p>
+            <ul class="vg-feature-list">
+                <li><i class="bi bi-search"></i>Browse open campus events</li>
+                <li><i class="bi bi-hand-thumbs-up"></i>Apply for shifts in seconds</li>
+                <li><i class="bi bi-award"></i>Track your hours and attendance</li>
+            </ul>
+        </div>
+        <div class="vg-auth-foot">Campus Volunteer Management System &middot; Prototype</div>
+    </section>
+    <section class="vg-auth-pane">
+    <div class="vg-auth-card vg-fade-in" style="max-width: 460px;">
+        <div class="vg-auth-logo">Create your account</div>
+        <p class="vg-auth-subtitle">Join as a volunteer &mdash; it takes under a minute</p>
+
+        <div th:if="${errorMsg}" class="alert alert-danger vg-alert mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${errorMsg}"></span>
+        </div>
+
+        <form th:action="@{/register}" th:object="${registrationDto}"
+              method="post" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- Name -->
+            <div class="mb-3">
+                <label for="reg-name" class="form-label">Full Name</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-vg text-muted">
+                        <i class="bi bi-person"></i>
+                    </span>
+                    <input type="text" id="reg-name" th:field="*{name}"
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
+                           placeholder="Your full name"/>
+                </div>
+                <div class="invalid-feedback" th:errors="*{name}"></div>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="reg-email" class="form-label">Email</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-vg text-muted">
+                        <i class="bi bi-envelope"></i>
+                    </span>
+                    <input type="email" id="reg-email" th:field="*{email}"
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                           placeholder="you@college.edu"/>
+                </div>
+                <div class="invalid-feedback" th:errors="*{email}"></div>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-4">
+                <label for="reg-password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-vg text-muted">
+                        <i class="bi bi-lock"></i>
+                    </span>
+                    <input type="password" id="reg-password" th:field="*{password}"
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                           placeholder="Minimum 6 characters"/>
+                </div>
+                <div class="invalid-feedback" th:errors="*{password}"></div>
+            </div>
+
+            <button type="submit" class="btn btn-accent w-100 py-2 mb-3" id="btn-register">
+                <i class="bi bi-person-check me-2"></i>Create Account
+            </button>
+        </form>
+
+        <p class="text-center text-muted mb-0" style="font-size:0.875rem;">
+            Already have an account?
+            <a th:href="@{/login}" class="text-accent fw-semibold text-decoration-none">Sign in</a>
+        </p>
+    </div>
+    </section>
+  </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${pageTitle != null ? pageTitle + ' | VolunteerGrid' : 'VolunteerGrid'}">VolunteerGrid</title>
+    <meta name="description" content="VolunteerGrid - Campus Event Volunteer Management System"/>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+    <!-- Charts for role dashboards -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <link rel="stylesheet" th:href="@{/css/polish.css}"/>
+</head>
+<body>
+
+<!-- ===== NAVIGATION BAR ===== -->
+<nav class="navbar navbar-expand-lg vg-navbar" th:fragment="navbar">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand vg-brand" th:href="@{/dashboard}">
+            <i class="bi bi-grid-3x3-gap-fill me-2 text-accent"></i>
+            <span>Volunteer<span class="text-accent">Grid</span></span>
+        </a>
+
+        <button class="navbar-toggler border-0" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <i class="bi bi-list fs-4 text-white"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto ms-3">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/dashboard}">
+                        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/events}">
+                        <i class="bi bi-calendar-event me-1"></i>Events
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('VOLUNTEER')">
+                    <a class="nav-link" th:href="@{/volunteer/my-assignments}">
+                        <i class="bi bi-clipboard-check me-1"></i>My Assignments
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ORGANIZER','ADMIN')">
+                    <a class="nav-link" th:href="@{/organizer/events/new}">
+                        <i class="bi bi-plus-circle me-1"></i>New Event
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/admin/users}">
+                        <i class="bi bi-people me-1"></i>Users
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-3" sec:authorize="isAuthenticated()">
+                <div class="vg-user-pill">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span sec:authentication="name">User</span>
+                    <span class="badge vg-role-badge ms-1" sec:authorize="hasRole('ADMIN')">Admin</span>
+                    <span class="badge vg-role-badge ms-1" sec:authorize="hasRole('ORGANIZER')">Organizer</span>
+                    <span class="badge vg-role-badge ms-1" sec:authorize="hasRole('VOLUNTEER')">Volunteer</span>
+                </div>
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-sm vg-btn-outline">
+                        <i class="bi bi-box-arrow-right me-1"></i>Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== SIDEBAR (for dashboard pages) ===== -->
+<aside class="vg-sidebar" th:fragment="sidebar">
+    <nav class="vg-sidebar-nav">
+        <a th:href="@{/dashboard}" class="vg-sidebar-link">
+            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+        </a>
+        <a th:href="@{/events}" class="vg-sidebar-link">
+            <i class="bi bi-calendar-event"></i><span>Events</span>
+        </a>
+        <div sec:authorize="hasAnyRole('VOLUNTEER')">
+            <a th:href="@{/volunteer/my-assignments}" class="vg-sidebar-link">
+                <i class="bi bi-clipboard-check"></i><span>My Assignments</span>
+            </a>
+        </div>
+        <div sec:authorize="hasAnyRole('ORGANIZER','ADMIN')">
+            <a th:href="@{/organizer/events/new}" class="vg-sidebar-link">
+                <i class="bi bi-plus-square"></i><span>Create Event</span>
+            </a>
+        </div>
+        <div sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/users}" class="vg-sidebar-link">
+                <i class="bi bi-people"></i><span>Manage Users</span>
+            </a>
+        </div>
+    </nav>
+</aside>
+
+<!-- ===== FLASH MESSAGES ===== -->
+<div th:fragment="flashMessages" class="px-4 pt-3">
+    <div th:if="${successMsg}" class="alert alert-success alert-dismissible fade show vg-alert" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${successMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMsg}" class="alert alert-danger alert-dismissible fade show vg-alert" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${errorMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${infoMsg}" class="alert alert-info alert-dismissible fade show vg-alert" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <span th:text="${infoMsg}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<!-- ===== STATUS BADGE FRAGMENT ===== -->
+<span th:fragment="statusBadge(status)"
+      th:classappend="${status.name() == 'OPEN' ? 'badge-open' :
+                       status.name() == 'CLOSED' ? 'badge-closed' :
+                       status.name() == 'COMPLETED' ? 'badge-completed' : 'badge-draft'}"
+      class="badge vg-status-badge"
+      th:text="${status}">
+</span>
+
+<!-- ===== ASSIGNMENT STATUS BADGE ===== -->
+<span th:fragment="assignmentBadge(status)"
+      th:classappend="${status.name() == 'APPROVED' ? 'badge-approved' :
+                       status.name() == 'PENDING' ? 'badge-pending' :
+                       status.name() == 'REJECTED' ? 'badge-rejected' :
+                       status.name() == 'WITHDRAWN' ? 'badge-withdrawn' : 'badge-completed'}"
+      class="badge vg-assignment-badge"
+      th:text="${status}">
+</span>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:fragment="scripts">
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.vg-alert').forEach(function (alert) {
+            window.setTimeout(function () {
+                bootstrap.Alert.getOrCreateInstance(alert).close();
+            }, 5500);
+        });
+
+        // Highlight the current page in the sidebar and top nav
+        var path = window.location.pathname.replace(/\/$/, '') || '/';
+        document.querySelectorAll('.vg-sidebar-link, .navbar-nav .nav-link').forEach(function (link) {
+            var href = (link.getAttribute('href') || '').replace(/\/$/, '');
+            if (href && (path === href || (href !== '/dashboard' && path.indexOf(href + '/') === 0))) {
+                link.classList.add('active');
+            }
+        });
+
+        // Count-up animation for dashboard stat numbers
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.querySelectorAll('.vg-stat-value').forEach(function (el) {
+                var target = parseInt(el.textContent, 10);
+                if (isNaN(target) || target <= 0) return;
+                var start = null;
+                (function step(ts) {
+                    start = start || ts;
+                    var p = Math.min((ts - start) / 700, 1);
+                    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+                    if (p < 1) requestAnimationFrame(step);
+                })(performance.now());
+            });
+        }
+
+        // Generic live filter: a [data-f-scope] wraps controls and [data-f-row] items.
+        //   [data-f-search]            text box matched against row data-search
+        //   [data-f-select="attr"]     <select> matched against row data-<attr>
+        //   [data-f-chip="attr"]       buttons (data-value) matched against row data-<attr>
+        //   [data-f-count]             element showing "n shown"; [data-f-empty] shown when no rows match
+        document.querySelectorAll('[data-f-scope]').forEach(function (scope) {
+            var rows = scope.querySelectorAll('[data-f-row]');
+            var search = scope.querySelector('[data-f-search]');
+            var selects = scope.querySelectorAll('[data-f-select]');
+            var chips = scope.querySelectorAll('[data-f-chip]');
+            var empty = scope.querySelector('[data-f-empty]');
+            var count = scope.querySelector('[data-f-count]');
+            var chipState = {};
+
+            function apply() {
+                var q = search ? search.value.trim().toLowerCase() : '';
+                var shown = 0;
+                rows.forEach(function (row) {
+                    var ok = !q || (row.dataset.search || '').toLowerCase().indexOf(q) !== -1;
+                    selects.forEach(function (s) {
+                        var attr = s.dataset.fSelect;
+                        if (ok && s.value && (row.dataset[attr] || '').toLowerCase() !== s.value.toLowerCase()) ok = false;
+                    });
+                    Object.keys(chipState).forEach(function (attr) {
+                        var v = chipState[attr];
+                        if (ok && v && (row.dataset[attr] || '').toLowerCase() !== v.toLowerCase()) ok = false;
+                    });
+                    row.classList.toggle('d-none-filter', !ok);
+                    if (ok) shown++;
+                });
+                if (empty) empty.classList.toggle('d-none', shown !== 0);
+                if (count) count.textContent = shown + ' shown';
+            }
+
+            if (search) search.addEventListener('input', apply);
+            selects.forEach(function (s) { s.addEventListener('change', apply); });
+            chips.forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    var attr = chip.dataset.fChip;
+                    scope.querySelectorAll('[data-f-chip="' + attr + '"]').forEach(function (c) { c.classList.remove('active'); });
+                    chip.classList.add('active');
+                    chipState[attr] = chip.dataset.value || '';
+                    apply();
+                });
+
+                var dashboardCharts = {};
+                var refreshButton = document.querySelector('[data-dashboard-refresh]');
+                var exportButton = document.querySelector('[data-dashboard-export]');
+
+                function renderDashboard(data) {
+                    var statusCanvas = document.querySelector('[data-dashboard-status-chart]');
+                    var performanceCanvas = document.querySelector('[data-dashboard-performance-chart]');
+                    var statusData = data.assignmentStatuses || data.eventStatuses || {};
+                    var labels = Object.keys(statusData);
+                    if (statusCanvas && window.Chart) {
+                        if (dashboardCharts.status) dashboardCharts.status.destroy();
+                        dashboardCharts.status = new Chart(statusCanvas, {
+                            type: 'doughnut',
+                            data: { labels: labels, datasets: [{ data: labels.map(function (label) { return statusData[label]; }),
+                                backgroundColor: ['#22c55e', '#f59e0b', '#94a3b8', '#6366f1'] }] },
+                            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                        });
+                    }
+                    if (performanceCanvas && window.Chart) {
+                        var performance = data.eventPerformance || [];
+                        if (dashboardCharts.performance) dashboardCharts.performance.destroy();
+                        dashboardCharts.performance = new Chart(performanceCanvas, {
+                            type: 'bar',
+                            data: { labels: performance.map(function (item) { return item.label; }),
+                                datasets: [{ label: 'Registered volunteers', data: performance.map(function (item) { return item.registered; }),
+                                    backgroundColor: '#4f46e5', borderRadius: 8 }] },
+                            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                                plugins: { legend: { display: false } } }
+                        });
+                    }
+                    var refreshed = document.querySelector('[data-dashboard-refreshed]');
+                    if (refreshed) refreshed.textContent = 'Updated ' + new Date(data.refreshedAt).toLocaleTimeString();
+                }
+
+                function refreshDashboard() {
+                    fetch('/dashboard/data', { headers: { 'Accept': 'application/json' } })
+                        .then(function (response) {
+                            if (!response.ok) throw new Error('Dashboard refresh failed');
+                            return response.json();
+                        })
+                        .then(renderDashboard)
+                        .catch(function (error) {
+                            var refreshed = document.querySelector('[data-dashboard-refreshed]');
+                            if (refreshed) refreshed.textContent = error.message;
+                        });
+                }
+                if (document.querySelector('[data-dashboard-status-chart], [data-dashboard-performance-chart]')) {
+                    refreshDashboard();
+                }
+                if (refreshButton) refreshButton.addEventListener('click', refreshDashboard);
+                if (exportButton) exportButton.addEventListener('click', function () {
+                    fetch('/dashboard/data').then(function (response) { return response.json(); }).then(function (data) {
+                        var rows = [['Metric', 'Value'], ['Events', data.eventCount || 0]];
+                        Object.keys(data.eventStatuses || {}).forEach(function (key) { rows.push(['Events ' + key, data.eventStatuses[key]]); });
+                        var csv = rows.map(function (row) { return row.map(function (cell) { return '"' + String(cell).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+                        var link = document.createElement('a');
+                        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+                        link.download = 'volunteergrid-dashboard.csv';
+                        link.click();
+                        URL.revokeObjectURL(link.href);
+                    });
+                });
+            });
+            apply();
+        });
+
+        // Demo credential buttons on the login page
+        document.querySelectorAll('[data-demo-email]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.getElementById('username').value = btn.dataset.demoEmail;
+                document.getElementById('password').value = btn.dataset.demoPass;
+            });
+        });
+
+        var search = document.querySelector('[data-event-search]');
+        var status = document.querySelector('[data-event-status]');
+        var cards = document.querySelectorAll('[data-event-card]');
+        var empty = document.querySelector('[data-filter-empty]');
+        if (search && status && cards.length) {
+          function filterEvents() {
+            var query = search.value.trim().toLowerCase();
+            var selectedStatus = status.value.toLowerCase();
+            var visible = 0;
+            cards.forEach(function (card) {
+                var haystack = card.dataset.eventSearch.toLowerCase();
+                var matchesQuery = !query || haystack.includes(query);
+                var matchesStatus = !selectedStatus || card.dataset.eventStatus.toLowerCase() === selectedStatus;
+                var show = matchesQuery && matchesStatus;
+                card.closest('.vg-event-column').classList.toggle('d-none', !show);
+                if (show) visible++;
+            });
+            if (empty) empty.classList.toggle('d-none', visible !== 0);
+          }
+
+          search.addEventListener('input', filterEvents);
+          status.addEventListener('change', filterEvents);
+        }
+    });
+</script>
+
+</body>
+</html>

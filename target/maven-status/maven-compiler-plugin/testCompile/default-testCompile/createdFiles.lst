@@ -1,0 +1,5 @@
+com\volunteergrid\service\AssignmentServiceTest.class
+com\volunteergrid\service\AttendanceServiceTest.class
+com\volunteergrid\StandaloneTestRunner.class
+com\volunteergrid\service\EventServiceTest.class
+com\volunteergrid\VolunteerGridApplicationTests.class

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>Shift Registrations | VolunteerGrid</title>
+</head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="vg-app-layout">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+    <main class="vg-main-content vg-fade-in">
+        <div th:replace="~{fragments/layout :: flashMessages}"></div>
+
+        <div class="vg-page-header">
+            <h1 class="vg-page-title">
+                <i class="bi bi-people text-accent me-2"></i>Shift Registrations
+            </h1>
+        </div>
+
+        <div th:if="${assignments.empty}" class="vg-empty-state vg-card">
+            <i class="bi bi-people d-block"></i>
+            <p>No volunteers registered for this shift yet.</p>
+        </div>
+
+        <div th:unless="${assignments.empty}" class="vg-card">
+            <div class="vg-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Volunteer</th>
+                            <th>Email</th>
+                            <th>Registered At</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a : ${assignments}">
+                            <td class="fw-600" th:text="${a.volunteerName}">-</td>
+                            <td class="text-muted" th:text="${a.volunteerEmail}">-</td>
+                            <td class="text-muted" style="font-size:0.85rem;"
+                                th:text="${#temporals.format(a.registrationTime,'dd MMM, HH:mm')}">-</td>
+                            <td>
+                                <span th:replace="~{fragments/layout :: assignmentBadge(${a.status})}"></span>
+                            </td>
+                            <td>
+                                <div th:if="${a.status.name() == 'PENDING'}" class="d-flex gap-2">
+                                    <form th:action="@{/organizer/assignments/{id}/approve(id=${a.id})}"
+                                          method="post">
+                                        <input type="hidden" name="shiftId" th:value="${a.shiftId}"/>
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <button type="submit" class="btn btn-sm badge-approved"
+                                                style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid #10b981;">
+                                            <i class="bi bi-check-circle me-1"></i>Approve
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/organizer/assignments/{id}/reject(id=${a.id})}"
+                                          method="post">
+                                        <input type="hidden" name="shiftId" th:value="${a.shiftId}"/>
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <button type="submit" class="btn btn-sm"
+                                                style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid #ef4444;">
+                                            <i class="bi bi-x-circle me-1"></i>Reject
+                                        </button>
+                                    </form>
+                                </div>
+                                <span th:unless="${a.status.name() == 'PENDING'}"
+                                      class="text-muted" style="font-size:0.85rem;">—</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

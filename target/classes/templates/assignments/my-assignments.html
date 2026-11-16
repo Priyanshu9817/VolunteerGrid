@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>My Assignments | VolunteerGrid</title>
+</head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="vg-app-layout">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+    <main class="vg-main-content vg-fade-in">
+        <div th:replace="~{fragments/layout :: flashMessages}"></div>
+
+        <div class="vg-page-header">
+            <h1 class="vg-page-title">
+                <i class="bi bi-clipboard-check text-accent me-2"></i>My Assignments
+            </h1>
+            <p class="vg-page-subtitle">Track your volunteer commitments</p>
+        </div>
+
+        <!-- Summary -->
+        <div class="vg-card mb-4">
+            <h5 class="fw-700 mb-3 text-accent">
+                <i class="bi bi-award me-2"></i>Contribution Summary
+            </h5>
+            <div class="vg-metric-row">
+                <div class="vg-metric">
+                    <div class="vg-metric-val" th:text="${summary.totalEventsParticipated}">0</div>
+                    <div class="vg-metric-lbl">Events</div>
+                </div>
+                <div class="vg-metric">
+                    <div class="vg-metric-val" th:text="${summary.totalShiftsAssigned}">0</div>
+                    <div class="vg-metric-lbl">Shifts</div>
+                </div>
+                <div class="vg-metric">
+                    <div class="vg-metric-val" th:text="${summary.completedShifts}">0</div>
+                    <div class="vg-metric-lbl">Completed</div>
+                </div>
+                <div class="vg-metric">
+                    <div class="vg-metric-val"
+                         th:text="${#numbers.formatDecimal(summary.totalVerifiedHours,1,1)}">0.0</div>
+                    <div class="vg-metric-lbl">Verified Hours</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments Table -->
+        <div class="vg-card">
+            <div th:if="${assignments.empty}" class="vg-empty-state">
+                <i class="bi bi-clipboard d-block"></i>
+                <p>No assignments yet. Browse events and register for a shift!</p>
+                <a th:href="@{/events}" class="btn btn-accent btn-sm mt-2">Browse Events</a>
+            </div>
+
+            <div th:unless="${assignments.empty}" class="vg-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Task</th>
+                            <th>Venue</th>
+                            <th>Date &amp; Time</th>
+                            <th>Status</th>
+                            <th>Hours</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a : ${assignments}">
+                            <td>
+                                <a th:href="@{/events/{id}(id=${a.eventId})}"
+                                   class="text-accent fw-600 text-decoration-none"
+                                   th:text="${a.eventTitle}">Event</a>
+                            </td>
+                            <td th:text="${a.shiftTaskName}">-</td>
+                            <td class="text-muted" style="font-size:0.85rem;"
+                                th:text="${a.shiftVenue}">-</td>
+                            <td class="text-muted" style="font-size:0.82rem;">
+                                <span th:text="${#temporals.format(a.shiftStartTime,'dd MMM, HH:mm')}"></span>
+                                &nbsp;–&nbsp;
+                                <span th:text="${#temporals.format(a.shiftEndTime,'HH:mm')}"></span>
+                            </td>
+                            <td>
+                                <span th:replace="~{fragments/layout :: assignmentBadge(${a.status})}"></span>
+                            </td>
+                            <td th:text="${a.completedHours != null ? #numbers.formatDecimal(a.completedHours,1,1) + ' h' : '—'}">-</td>
+                            <td>
+                                <!-- Can withdraw if PENDING or APPROVED -->
+                                <form th:if="${a.status.name() == 'PENDING' or a.status.name() == 'APPROVED'}"
+                                      th:action="@{/volunteer/assignments/{id}/withdraw(id=${a.id})}"
+                                      method="post"
+                                      onsubmit="return confirm('Are you sure you want to withdraw?')">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-sm"
+                                            style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid #ef4444;">
+                                        <i class="bi bi-x-circle me-1"></i>Withdraw
+                                    </button>
+                                </form>
+                                <span th:if="${a.status.name() == 'COMPLETED'}" class="text-muted" style="font-size:0.8rem;">
+                                    ✓ Done
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

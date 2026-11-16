@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>Event Report | VolunteerGrid</title>
+</head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="vg-app-layout">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+    <main class="vg-main-content vg-fade-in">
+        <div class="vg-page-header">
+            <h1 class="vg-page-title">
+                <i class="bi bi-bar-chart text-accent me-2"></i>Event Report
+            </h1>
+            <p class="vg-page-subtitle" th:text="${event.title}"></p>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-4">
+                <div class="vg-card-stat">
+                    <div class="vg-stat-value" th:text="${report['totalRegistered']}">0</div>
+                    <div class="vg-stat-label">Registered</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="vg-card-stat">
+                    <div class="vg-stat-value" th:text="${report['totalCheckedIn']}">0</div>
+                    <div class="vg-stat-label">Checked In</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="vg-card-stat">
+                    <div class="vg-stat-value" th:text="${report['totalAttended']}">0</div>
+                    <div class="vg-stat-label">Completed</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Table -->
+        <div class="vg-card">
+            <h5 class="fw-700 mb-3">
+                <i class="bi bi-people text-accent me-2"></i>Volunteer Registrations
+            </h5>
+
+            <div th:if="${assignments.empty}" class="vg-empty-state">
+                <i class="bi bi-people d-block"></i>
+                <p>No registrations for this event yet.</p>
+            </div>
+
+            <div th:unless="${assignments.empty}" class="vg-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Volunteer</th>
+                            <th>Task / Shift</th>
+                            <th>Status</th>
+                            <th>Check-In</th>
+                            <th>Check-Out</th>
+                            <th>Hours</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a : ${assignments}">
+                            <td>
+                                <div class="fw-600" th:text="${a.volunteerName}">-</div>
+                                <div class="text-muted" style="font-size:0.8rem;"
+                                     th:text="${a.volunteerEmail}">-</div>
+                            </td>
+                            <td>
+                                <div th:text="${a.shiftTaskName}">-</div>
+                                <div class="text-muted" style="font-size:0.8rem;"
+                                     th:text="${#temporals.format(a.shiftStartTime,'HH:mm')} + ' – ' + ${#temporals.format(a.shiftEndTime,'HH:mm')}">-</div>
+                            </td>
+                            <td>
+                                <span th:replace="~{fragments/layout :: assignmentBadge(${a.status})}"></span>
+                            </td>
+                            <td class="text-muted" style="font-size:0.85rem;"
+                                th:text="${a.checkInTime != null ? #temporals.format(a.checkInTime,'HH:mm') : '—'}">-</td>
+                            <td class="text-muted" style="font-size:0.85rem;"
+                                th:text="${a.checkOutTime != null ? #temporals.format(a.checkOutTime,'HH:mm') : '—'}">-</td>
+                            <td th:text="${a.completedHours != null ? #numbers.formatDecimal(a.completedHours,1,1) + ' h' : '—'}">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

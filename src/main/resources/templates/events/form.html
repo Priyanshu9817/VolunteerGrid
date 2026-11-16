@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>Event Form | VolunteerGrid</title>
+</head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div class="vg-app-layout">
+    <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+    <main class="vg-main-content vg-fade-in">
+        <div th:replace="~{fragments/layout :: flashMessages}"></div>
+
+        <div class="vg-page-header">
+            <h1 class="vg-page-title">
+                <i class="bi bi-calendar-plus text-accent me-2"></i>
+                <span th:text="${eventDto.id != null ? 'Edit Event' : 'Create New Event'}"></span>
+            </h1>
+        </div>
+
+        <div class="vg-form-card">
+            <form th:action="${eventDto.id != null ? '/organizer/events/' + eventDto.id + '/edit' : '/organizer/events/new'}"
+                  th:object="${eventDto}"
+                  method="post" novalidate>
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div th:if="${errorMsg}" class="alert alert-danger vg-alert mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span th:text="${errorMsg}"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="ev-title">Event Title *</label>
+                    <input type="text" id="ev-title" th:field="*{title}"
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                           placeholder="e.g. TechFest 2026"/>
+                    <div class="invalid-feedback" th:errors="*{title}"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="ev-desc">Description</label>
+                    <textarea id="ev-desc" th:field="*{description}"
+                              class="form-control" rows="3"
+                              placeholder="Brief description of the event..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="ev-venue">Venue *</label>
+                    <input type="text" id="ev-venue" th:field="*{venue}"
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('venue')} ? 'is-invalid'"
+                           placeholder="e.g. Main Campus Auditorium"/>
+                    <div class="invalid-feedback" th:errors="*{venue}"></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="ev-start">Start Date &amp; Time *</label>
+                        <input type="datetime-local" id="ev-start" th:field="*{startTime}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid'"/>
+                        <div class="invalid-feedback" th:errors="*{startTime}"></div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label" for="ev-end">End Date &amp; Time *</label>
+                        <input type="datetime-local" id="ev-end" th:field="*{endTime}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('endTime')} ? 'is-invalid'"/>
+                        <div class="invalid-feedback" th:errors="*{endTime}"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="ev-status">Status</label>
+                    <select id="ev-status" th:field="*{status}" class="form-select">
+                        <option th:each="s : ${statuses}"
+                                th:value="${s}"
+                                th:text="${s}"></option>
+                    </select>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-accent px-4">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${eventDto.id != null ? 'Save Changes' : 'Create Event'}"></span>
+                    </button>
+                    <a th:href="@{/events}" class="btn vg-btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>Login | VolunteerGrid</title>
+</head>
+<body>
+<div class="vg-auth-page">
+  <div class="vg-auth-split">
+
+    <!-- Brand panel -->
+    <section class="vg-auth-brand">
+        <div class="vg-auth-mark"><i class="bi bi-grid-3x3-gap-fill"></i>VolunteerGrid</div>
+        <div>
+            <h1>Run campus events.<br/>Without the chaos.</h1>
+            <p class="lead">Plan shifts, approve volunteers and track attendance in one place.</p>
+            <ul class="vg-feature-list">
+                <li><i class="bi bi-calendar-event"></i>Create events and open volunteer shifts</li>
+                <li><i class="bi bi-person-check"></i>Review and approve sign-ups in a click</li>
+                <li><i class="bi bi-clipboard-data"></i>Attendance and hours reports, ready for faculty</li>
+            </ul>
+        </div>
+        <div class="vg-auth-foot">Campus Volunteer Management System &middot; Prototype</div>
+    </section>
+
+    <!-- Form panel -->
+    <section class="vg-auth-pane">
+      <div class="vg-auth-card vg-fade-in">
+        <div class="vg-auth-logo">Welcome back</div>
+        <p class="vg-auth-subtitle">Sign in to your VolunteerGrid account</p>
+
+        <div th:if="${errorMsg}" class="alert alert-danger vg-alert mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${errorMsg}"></span>
+        </div>
+        <div th:if="${logoutMsg}" class="alert alert-info vg-alert mb-3" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <span th:text="${logoutMsg}"></span>
+        </div>
+        <div th:if="${successMsg}" class="alert alert-success vg-alert mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${successMsg}"></span>
+        </div>
+
+        <form th:action="@{/login}" method="post" novalidate>
+            <div class="mb-3">
+                <label for="username" class="form-label">Email address</label>
+                <div class="input-group">
+                    <span class="input-group-text text-muted"><i class="bi bi-envelope"></i></span>
+                    <input type="email" id="username" name="username" class="form-control"
+                           placeholder="you@college.edu" required autocomplete="email"/>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text text-muted"><i class="bi bi-lock"></i></span>
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="••••••••" required autocomplete="current-password"/>
+                </div>
+            </div>
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <button type="submit" class="btn btn-accent w-100 py-2 mb-3" id="btn-login">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </button>
+        </form>
+
+        <p class="text-center text-muted mt-2 mb-3" style="font-size:0.875rem;">
+            New volunteer?
+            <a th:href="@{/register}" class="text-accent fw-semibold text-decoration-none">Create an account</a>
+        </p>
+
+        <!-- Demo logins: click a row to fill the form -->
+        <div class="vg-demo-box">
+            <div class="vg-demo-title">Demo accounts &mdash; click to fill</div>
+            <button type="button" data-demo-email="admin@volunteergrid.com" data-demo-pass="Admin@1234">
+                <span>Admin</span><span>admin@volunteergrid.com</span>
+            </button>
+            <button type="button" data-demo-email="org1@volunteergrid.com" data-demo-pass="Org@1234">
+                <span>Organizer</span><span>org1@volunteergrid.com</span>
+            </button>
+            <button type="button" data-demo-email="vol1@volunteergrid.com" data-demo-pass="Vol@1234">
+                <span>Volunteer</span><span>vol1@volunteergrid.com</span>
+            </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"/>
+</body>
+</html>
